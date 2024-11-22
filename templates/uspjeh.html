@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Čestitamo!</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('/static/images/mainbck.jpg'); /* Možete promijeniti pozadinsku sliku */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            color: #fff;
+            position: relative;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .congrats-box {
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 40px;
+            border-radius: 10px;
+        }
+        h1 {
+            font-size: 3em;
+            color: #E20074;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.5em;
+        }
+        .btn-home {
+            margin-top: 30px;
+            background-color: #E20074;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-home:hover {
+            background-color: #fff;
+            color: #E20074;
+            border: 2px solid #E20074;
+        }
+    </style>
+</head>
+<body>
+    <div class="congrats-box">
+        <h1>Čestitamo, {{ nickname }}!</h1>
+        <p>Uspješno ste završili sve levele!</p>
+        <a href="/" class="btn btn-home">Početna stranica</a>
+    </div>
+</body>
+</html>

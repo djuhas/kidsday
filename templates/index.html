@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dobrodošli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('/static/images/mainbck.jpg');
+            background-size: cover;
+            color: #fff;
+        }
+        .overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 50px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container d-flex align-items-center justify-content-center" style="height: 100vh;">
+        <div class="overlay text-center">
+            <h1>Dobrodošli!</h1>
+            <form action="/schedule" method="post">
+                <div class="mb-3">
+                    <label for="nickname" class="form-label">Nadimak:</label>
+                    <input type="text" id="nickname" name="nickname" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="city" class="form-label">Grad:</label>
+                    <select id="city" name="city" class="form-select" required>
+                        <option value="Zagreb">Zagreb</option>
+                        <option value="Osijek">Osijek</option>
+                        <option value="Rijeka">Rijeka</option>
+                        <option value="Split">Split</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Nastavi</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

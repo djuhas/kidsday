@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('/static/images/mainbck.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            color: #fff;
+            position: relative;
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+        }
+        .chat-box {
+            background: url('/static/images/aiassistent.png') center no-repeat, rgba(255, 255, 255, 0.9);
+            background-size: 60%;
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.164);
+        }
+        #chat-window {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+        }
+        .chat-title {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            color: #fff;
+            padding: 10px 20px;
+            background-color: #E20074;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+        .message.user {
+            justify-content: flex-end;
+        }
+        .message.assistant {
+            justify-content: flex-start;
+        }
+        .message.user .content {
+            background-color: #75c7e383;
+            color: #000000;
+            text-align: right;
+        }
+        .message.assistant .content {
+            background-color: #f8a3c480;
+            color: #000000;
+            text-align: left;
+        }
+        .message .content {
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 70%;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary, .btn-success {
+            background-color: #E20074;
+            color: #fff;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover, .btn-success:hover {
+            background-color: #fff;
+            color: #E20074;
+            border: 2px solid #E20074;
+        }
+        /* Stil za predefinirane poruke sekciju */
+        #preset-messages {
+            background-color: #E20074;
+            border-radius: 10px;
+            padding: 15px;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #preset-messages h5 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        #preset-messages .btn-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        #preset-messages button {
+            background-color: #fff;
+            color: #E20074;
+            border: none;
+            margin: 5px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: transform 0.2s ease, background-color 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        #preset-messages button:hover {
+            background-color: #E20074;
+            color: #fff;
+            transform: scale(1.05);
+        }
+        /* Stil za pitanje */
+        #question-section h5 {
+            background-color: #E20074;
+            color: #fff;
+            padding: 10px;
+            font-size: 1.5em;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container chat-container">
+        <!-- Naslov CHAT -->
+        <div class="chat-title">MAGENTA CHAT</div>
+
+        <!-- Chat box -->
+        <div class="chat-box">
+            <div id="chat-window" class="mb-3">
+                {% for message in conversation %}
+                    {% if message['role'] != 'system' %}
+                        <div class="message {{ message['role'] }}">
+                            <div class="content">
+                                <strong>
+                                    {% if message['role'] == 'user' %}
+                                        {{ nickname }}:
+                                    {% else %}
+                                        {{ assistant_name }}:
+                                    {% endif %}
+                                </strong> {{ message['content'] }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Predefinirane poruke -->
+            <div id="preset-messages" class="mb-3">
+                <h5>Brze poruke:</h5>
+                <div class="btn-container">
+                    {% for preset in presets %}
+                        <button class="btn btn-secondary btn-sm" onclick="addPreset('{{ preset }}')">{{ preset }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Polje za unos poruke -->
+            <form action="/chat" method="post" class="mb-3">
+                <div class="input-group">
+                    <input type="text" name="user_input" class="form-control" placeholder="Upišite poruku..." required>
+                    <button type="submit" class="btn btn-primary">Pošalji</button>
+                </div>
+            </form>
+
+            <!-- Pitanje za trenutni level -->
+            <div id="question-section" class="mb-3">
+                <h5>{{ question }}</h5>
+            </div>
+
+            <!-- Unos Ključne Riječi -->
+            <form action="/next_level" method="post" class="mb-3"> <!-- Promijenjen action -->
+                <div class="input-group">
+                    <input type="text" name="keyword" class="form-control" placeholder="Unesite ključnu riječ za nastavak..." required>
+                    <button type="submit" class="btn btn-success">Sljedeći Odjel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        function addPreset(text) {
+            document.querySelector('input[name="user_input"]').value = text;
+        }
+    </script>
+</body>
+</html>
