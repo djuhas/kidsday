@@ -7,35 +7,37 @@ from starlette.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from aiohttp import ClientSession
 from datetime import datetime
-from dotenv import load_dotenv
 
-# Učitavanje .env datoteke
-load_dotenv()
+# Removed the line that loads the .env file
+# from dotenv import load_dotenv
 
-# Postavljanje logiranja
+# Removed load_dotenv() since we are now using environment variables directly
+# load_dotenv()
+
+# Setting up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# Dohvaćanje varijabli iz .env datoteke
+# Fetching variables from the environment
 API_KEY = os.getenv('API_KEY')
 ENDPOINT = os.getenv('ENDPOINT')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 if not API_KEY or not ENDPOINT or not SECRET_KEY:
-    raise ValueError("API_KEY, ENDPOINT i SECRET_KEY moraju biti postavljeni u .env datoteci")
+    raise ValueError("API_KEY, ENDPOINT, and SECRET_KEY must be set in the environment variables")
 
 app = FastAPI()
 
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
-# Montiranje statičkih datoteka
+# Mounting static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Postavljanje predložaka
+# Setting up templates
 templates = Jinja2Templates(directory="templates")
 
 
 def get_assistant_instructions(level, nickname):
-    """Dohvaća upute za asistenta iz .env datoteke."""
+    """Fetches assistant instructions from environment variables."""
     instruction_key = f'ASSISTANT_INSTRUCTIONS_LEVEL_{level}'
     instructions = os.getenv(instruction_key, "Ti si zadani asistent.")
     instructions = instructions.replace("{nickname}", nickname)
@@ -43,7 +45,7 @@ def get_assistant_instructions(level, nickname):
 
 
 def get_initial_message(level, nickname):
-    """Dohvaća početnu poruku asistenta iz .env datoteke."""
+    """Fetches the assistant's initial message from environment variables."""
     message_key = f'ASSISTANT_INITIAL_MESSAGE_LEVEL_{level}'
     message = os.getenv(message_key, "Pozdrav! Kako ti mogu pomoći?")
     message = message.replace("{nickname}", nickname)
@@ -51,21 +53,21 @@ def get_initial_message(level, nickname):
 
 
 def get_presets_for_level(level):
-    """Dohvaća brze poruke iz .env datoteke za određeni level."""
+    """Fetches quick messages from environment variables for a specific level."""
     presets_key = f'PRESETS_LEVEL_{level}'
     presets = os.getenv(presets_key, "")
     return [preset.strip() for preset in presets.split(",") if preset.strip()]
 
 
 def get_question_for_level(level):
-    """Dohvaća pitanje za određeni level iz .env datoteke."""
+    """Fetches the question for a specific level from environment variables."""
     question_key = f'QUESTION_LEVEL_{level}'
     question = os.getenv(question_key, "Pitanje nije definirano za ovaj level.")
     return question
 
 
 def is_next_activity(activity_time):
-    """Provjerava je li aktivnost sljedeća na rasporedu."""
+    """Checks if an activity is next on the schedule."""
     current_time = datetime.now().strftime("%H:%M")
     return activity_time > current_time
 
@@ -115,16 +117,16 @@ async def get_chat(request: Request):
         initial_message = get_initial_message(level, nickname)
         conversation.append({"role": "assistant", "content": initial_message})
         request.session['conversation'] = conversation
-    assistant_name = "Magenta"  # Dodano ime asistenta
-    presets = get_presets_for_level(level)  # Dohvati brze poruke za trenutni level
-    question = get_question_for_level(level)  # Dohvati pitanje za trenutni level
+    assistant_name = "Magenta"  # Assistant's name
+    presets = get_presets_for_level(level)  # Get quick messages for the current level
+    question = get_question_for_level(level)  # Get the question for the current level
     return templates.TemplateResponse("chat.html", {
         "request": request,
         "conversation": conversation,
         "nickname": nickname,
         "assistant_name": assistant_name,
         "presets": presets,
-        "question": question,  # Prosljeđivanje pitanja
+        "question": question,  # Passing the question
     })
 
 
@@ -144,24 +146,24 @@ async def post_chat(request: Request, user_input: str = Form(...)):
     assistant_response = await get_llm_response(conversation_to_send)
     conversation.append({"role": "assistant", "content": assistant_response})
     request.session['conversation'] = conversation
-    assistant_name = "Magenta"  # Dodano ime asistenta
-    presets = get_presets_for_level(level)  # Dohvati brze poruke za trenutni level
-    question = get_question_for_level(level)  # Dohvati pitanje za trenutni level
+    assistant_name = "Magenta"  # Assistant's name
+    presets = get_presets_for_level(level)  # Get quick messages for the current level
+    question = get_question_for_level(level)  # Get the question for the current level
     return templates.TemplateResponse("chat.html", {
         "request": request,
         "conversation": conversation,
         "nickname": nickname,
         "assistant_name": assistant_name,
         "presets": presets,
-        "question": question,  # Prosljeđivanje pitanja
+        "question": question,  # Passing the question
     })
 
 
 @app.post("/next_level")
 async def next_level(request: Request, keyword: str = Form(...)):
     """
-    Provjera ključne riječi i prelazak na sljedeći level ako je ispravna.
-    Ako je trenutni level 9 i ključna riječ je ispravna, preusmjerava na stranicu uspjeha.
+    Checks the keyword and proceeds to the next level if correct.
+    If the current level is 9 and the keyword is correct, redirects to the success page.
     """
     nickname = request.session.get('nickname')
     level = request.session.get('level', 1)
@@ -169,23 +171,23 @@ async def next_level(request: Request, keyword: str = Form(...)):
     if not nickname:
         return RedirectResponse(url="/")
 
-    # Dohvati ispravnu ključnu riječ za trenutni level iz .env datoteke
+    # Fetch the correct keyword for the current level from environment variables
     correct_keyword_key = f'KEYWORD_LEVEL_{level}'
-    correct_keyword = os.getenv(correct_keyword_key, "").strip().lower()  # Pretvori u lowercase radi lakše usporedbe
+    correct_keyword = os.getenv(correct_keyword_key, "").strip().lower()  # Convert to lowercase for comparison
 
-    # Provjeri unesenu ključnu riječ (ignoriši velika/mala slova)
+    # Check the entered keyword (case-insensitive)
     if keyword.strip().lower() == correct_keyword:
         if level == 9:
-            # Ako je ovo posljednji level, preusmjeri na stranicu uspjeha
+            # If this is the last level, redirect to the success page
             return RedirectResponse(url="/success", status_code=303)
         else:
-            # Prelazak na sljedeći level
+            # Proceed to the next level
             level += 1
             request.session['level'] = level
-            request.session['conversation'] = []  # Resetiranje razgovora za novi level
+            request.session['conversation'] = []  # Reset conversation for the new level
             return RedirectResponse(url="/chat", status_code=303)
     else:
-        # Ako ključna riječ nije ispravna, dodaj poruku u razgovor
+        # If the keyword is incorrect, add a message to the conversation
         conversation = request.session.get('conversation', [])
         conversation.append({
             "role": "assistant",
@@ -207,7 +209,7 @@ async def next_level(request: Request, keyword: str = Form(...)):
 
 @app.get("/success", response_class=HTMLResponse)
 async def success(request: Request):
-    """Prikazuje stranicu uspjeha nakon završetka levela."""
+    """Displays the success page after completing the level."""
     nickname = request.session.get('nickname')
     if not nickname:
         return RedirectResponse(url="/")
@@ -228,15 +230,15 @@ async def get_llm_response(conversation_history):
         "temperature": 0.7,
         "top_p": 0.95,
     }
-    # Logiraj payload
-    logging.info(f"Payload koji se šalje prema endpointu: {payload}")
+    # Log the payload
+    logging.info(f"Payload sent to the endpoint: {payload}")
     async with ClientSession() as session:
         async with session.post(ENDPOINT, headers=headers, json=payload) as resp:
             if resp.status == 200:
                 data = await resp.json()
                 return data['choices'][0]['message']['content']
             else:
-                error_message = f"Greška pri komunikaciji s endpointom. Status: {resp.status}, Poruka: {await resp.text()}"
+                error_message = f"Error communicating with the endpoint. Status: {resp.status}, Message: {await resp.text()}"
                 logging.error(error_message)
                 return "Došlo je do greške pri komunikaciji s AI modelom."
 
