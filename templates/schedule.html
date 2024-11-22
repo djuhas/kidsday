@@ -45,6 +45,36 @@
             color: #E20074;
             border: 2px solid #E20074;
         }
+        /* Dodajte medijske upite za mobilne uređaje */
+        @media (max-width: 768px) {
+            body {
+                height: auto;
+                padding: 10px;
+            }
+            .main-header {
+                margin-top: 10px;
+                padding: 15px;
+            }
+            .main-header h1, .main-header h2 {
+                font-size: 1.5em;
+            }
+            .schedule-box, .info-box {
+                padding: 15px;
+            }
+            .btn-ai-assistant {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+            .schedule-box h3, .info-box h3 {
+                font-size: 1.3em;
+            }
+            .info-box p {
+                font-size: 0.9em;
+            }
+            .list-group-item {
+                font-size: 0.9em;
+            }
+        }
     </style>
 </head>
 <body>

@@ -134,6 +134,51 @@
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
+        /* Dodajte medijske upite za mobilne uređaje */
+        @media (max-width: 768px) {
+            body {
+                height: auto;
+            }
+            .chat-container {
+                padding: 10px;
+            }
+            .chat-box {
+                background-size: 40%;
+                padding: 15px;
+            }
+            .chat-title {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+            #chat-window {
+                max-height: 50vh;
+                padding: 10px;
+            }
+            .message .content {
+                max-width: 100%;
+            }
+            #preset-messages {
+                padding: 10px;
+            }
+            #preset-messages h5 {
+                font-size: 1.2em;
+            }
+            #preset-messages button {
+                padding: 8px 10px;
+                font-size: 0.9em;
+            }
+            #question-section h5 {
+                font-size: 1.2em;
+                padding: 8px;
+            }
+            .input-group .form-control {
+                font-size: 0.9em;
+            }
+            .btn {
+                font-size: 0.9em;
+                padding: 8px 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -185,7 +230,7 @@
             </div>
 
             <!-- Unos Ključne Riječi -->
-            <form action="/next_level" method="post" class="mb-3"> <!-- Promijenjen action -->
+            <form action="/next_level" method="post" class="mb-3">
                 <div class="input-group">
                     <input type="text" name="keyword" class="form-control" placeholder="Unesite ključnu riječ za nastavak..." required>
                     <button type="submit" class="btn btn-success">Sljedeći Odjel</button>
