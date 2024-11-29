@@ -454,6 +454,25 @@
             document.querySelector('#successModal .btn-close').addEventListener('click', function() {
                 window.location.href = nextUrl;
             }, { once: true });
+
+            // Dodaj event listener za kada se modal zatvori na bilo koji način
+            document.getElementById('successModal').addEventListener('hidden.bs.modal', function () {
+                window.location.href = nextUrl;
+            }, { once: true });
+
+            // Dodaj event listener za space key press
+            function handleSpacePress(event) {
+                if (event.key === ' ' || event.code === 'Space') {
+                    window.location.href = nextUrl;
+                }
+            }
+
+            document.addEventListener('keydown', handleSpacePress);
+
+            // Ukloni listener kada se modal zatvori
+            document.getElementById('successModal').addEventListener('hidden.bs.modal', function () {
+                document.removeEventListener('keydown', handleSpacePress);
+            }, { once: true });
         }
 
         // Handle form submission za "Sljedeći Odjel" koristeći AJAX
