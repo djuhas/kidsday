@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="hr">
 <head>
+    <meta charset="UTF-8">
     <title>Raspored</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Dodano za mobilne uređaje -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -9,8 +11,20 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            height: 100vh;
             color: #fff;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box; /* Dodano */
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            box-sizing: border-box; /* Dodano */
         }
         .main-header {
             margin-top: 20px;
@@ -19,16 +33,29 @@
             border-radius: 10px;
             text-align: center;
         }
-        .schedule-box, .info-box {
-            background-color: rgba(255, 255, 255, 0.9);
+        .main-header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+        .info-box {
+            background-color: rgba(255, 255, 255, 0.97);
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 20px;
             color: #333;
+            box-sizing: border-box; /* Dodano */
         }
-        .next-activity {
-            font-weight: bold;
-            color: #dc3545;
+        h3 {
+            color: #E20074;
+            font-size: 1.5em;
+            margin-top: 0;
+        }
+        ul {
+            margin-top: 15px;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
         }
         .btn-ai-assistant {
             background-color: #E20074;
@@ -45,34 +72,69 @@
             color: #E20074;
             border: 2px solid #E20074;
         }
-        /* Dodajte medijske upite za mobilne uređaje */
+        /* Medijski upiti za različite veličine ekrana */
+        @media (max-width: 992px) {
+            .main-header h1 {
+                font-size: 1.8em;
+            }
+            h3 {
+                font-size: 1.4em;
+            }
+            .btn-ai-assistant {
+                padding: 12px 25px;
+                font-size: 1.1em;
+            }
+            .info-box {
+                padding: 18px;
+            }
+        }
         @media (max-width: 768px) {
-            body {
-                height: auto;
-                padding: 10px;
+            .main-header h1 {
+                font-size: 1.6em;
             }
-            .main-header {
-                margin-top: 10px;
-                padding: 15px;
-            }
-            .main-header h1, .main-header h2 {
-                font-size: 1.5em;
-            }
-            .schedule-box, .info-box {
-                padding: 15px;
+            h3 {
+                font-size: 1.3em;
             }
             .btn-ai-assistant {
                 padding: 10px 20px;
                 font-size: 1em;
             }
-            .schedule-box h3, .info-box h3 {
-                font-size: 1.3em;
+            .info-box {
+                padding: 15px;
             }
-            .info-box p {
+            body {
+                align-items: flex-start;
+            }
+            .container {
+                padding: 15px;
+            }
+        }
+        @media (max-width: 576px) {
+            .main-header h1 {
+                font-size: 1.4em;
+            }
+            h3 {
+                font-size: 1.2em;
+            }
+            .btn-ai-assistant {
+                padding: 8px 15px;
                 font-size: 0.9em;
             }
-            .list-group-item {
+            .info-box {
+                padding: 10px;
+            }
+            ul {
+                padding-left: 15px;
+            }
+            li {
                 font-size: 0.9em;
+            }
+            .main-header {
+                margin-top: 15px;
+                padding: 15px;
+            }
+            .container {
+                padding: 10px;
             }
         }
     </style>
@@ -82,29 +144,96 @@
         <!-- Glavni pozdrav -->
         <div class="main-header">
             <h1>Pozdrav, {{ nickname }}!</h1>
-            <h2>Dobrodošli u raspored aktivnosti za grad {{ city }}</h2>
         </div>
 
         <!-- Kutija s informacijama -->
         <div class="info-box">
-            <h3>Informacije o rasporedu</h3>
-            <p>Ovdje možete vidjeti vaš današnji raspored aktivnosti prilagođen vašem odabranom gradu. Aktivnosti su prikazane kronološkim redoslijedom, a sljedeća aktivnost je posebno označena. Klikom na <b>"Saznaj više pomoću AI asistenta"</b>, dobit ćete dodatne personalizirane informacije i prijedloge aktivnosti, te interaktivnu igru za bolje razumijevanje.</p>
+            <p>Ja sam Magenta, tvoja AI asistentica za današnji dan – i jedva čekam da se zabavimo zajedno!</p>
+            <p>Imam osjećaj da voliš avanture, zar ne? Danas ćemo istraživati što tvoji mama ili tata rade na poslu – možda ćeš otkriti nešto baš zanimljivo i korisno!</p>       
+            <p><b>Ali to nije sve!</b> Osmislila sam super igru samo za tebe. Ako voliš potrage i zagonetke, pripremi se jer imam izazov koji će ti zagrijati moždane vijuge. Ako uspiješ riješiti sve zagonetke, čeka te <b>posebna nagrada</b>!</p>
+            <p>Prije nego što krenemo, imam nešto važno za tebe – da ne propustiš ni trenutak zabave iz današnjeg bogatog programa! Ovdje možeš pronaći informacije o današnjim aktivnostima, prilagođene tvom gradu.</p>
         </div>
 
-        <!-- Kutija za raspored -->
-        <div class="schedule-box">
-            <h3>Vaš današnji raspored</h3>
-            <ul class="list-group">
-                {% for item in schedule %}
-                    <li class="list-group-item schedule-item {% if is_next_activity(item.time) %}next-activity{% endif %}">
-                        {{ item.time }} - {{ item.activity }}
-                    </li>
-                {% endfor %}
+        <!-- Dinamički sadržaj za gradove -->
+        {% if city == "Zagreb" %}
+        <div class="info-box">
+            <h3><b>Od 11 do 15 sati dovedite svoje mališane u sljedeće zabavne „zone":</b></h3>
+            <ul>
+                <li><b>[Hilton 8. kat]</b></li>
+                <li>11:00 -11:20 sati - Isječak iz predstave Ive Kožul "Svinjceza" nastale po istoimenoj slikovnici, uz breakadance performans. Slikovnicu će biti moguće kupiti i tako donirati za Zakladu Prijatelj (samo gotovinom).</li>
+                <li>11:20-12:20 sati: Magic Leon, mađioničarska predstava</li>
+                <li>12:20-13:00 sati: Blagdanska predstava naziva "Izgubljena brada Djeda Mraza"</li>
+                <li>13:00 -14:00 sati: Nastup Maje Šuput uz pratnju Blooma</li>
+                <li>14:00 -14:20 sati: Isječak iz predstave Ive Kožul...</li>
+                <li>Uz to, izdvajamo zabavne kutke: face painting, tattoo korner, slime bar, paint & juice, carnival games, vožnja dronova.</li>
             </ul>
+            <p><b>[Magenta uredi]</b></p>
+            <ul>
+                <li>1. KAT – Otkriji što naš brend stvara u zoni C!</li>
+                <li>2. KAT – Postani policajac na 1 dan u zoni B!</li>
+                <li>4. KAT - Prodajni izazov te čeka u zoni B!</li>
+                <li>5. KAT - Zakorači u svijet zdravlja i postani doktor u zoni B!</li>
+                <li>6. KAT – Nauči kako se ponašati u slučaju požara u zoni B!</li>
+                <li>7. KAT – Otkrij što je naš tim AI stručnjaka osmislio za tebe u zoni B!</li>
+                <li>8. KAT – Saznaj što napraviti kada se dogodi kvar na liniji u zoni C!</li>
+            </ul>
+            <p><b>[Predvorje HT zgrade]</b></p>
+            <p>Želite li ovjekovječiti ovaj veliki dan za svoje mališane, moći ćete to učiniti u posebno uređenom blagdanskom foto kutku.</p>
+            <p>Pustolovina malih inovatora počinje za tri, dva, jedan... 😊</p>
         </div>
+        {% elif city == "Rijeka" %}
+        <div class="info-box">
+            <h3><b>Od 11 do 14 sati čekamo vas u sljedećim zabavnim kutcima:</b></h3>
+            <ul>
+                <li>Face painting</li>
+                <li>HT zone pod nazivom „Što želim biti kada odrastem?"</li>
+                <li>Carnival games</li>
+                <li>Paint & juice</li>
+                <li>Photobooth</li>
+            </ul>
+            <p>Želite li ovjekovječiti ovaj veliki dan za svoje mališane, moći ćete to učiniti u blagdanskom photoboothu s instant ispisom fotografija.</p>
+            <p>Toga dana, djeca će se moći poslužiti slatkim i slanim poslasticama, a njihov happy box poklon čekat će ih kod vaših evidentičara 😊</p>
+            <p>Pustolovina malih inovatora počinje za tri, dva, jedan...</p>
+        </div>
+        {% elif city == "Split" %}
+        <div class="info-box">
+            <h3><b>Od 11 do 14 sati čekamo vas u sljedećim zabavnim kutcima:</b></h3>
+            <ul>
+                <li>Face painting</li>
+                <li>HT zone pod nazivom „Što želim biti kada odrastem?"</li>
+                <li>Carnival games</li>
+                <li>Paint & juice</li>
+                <li>Photobooth</li>
+                <li>Radionica - izradi božićnu zdjelicu od gline</li>
+            </ul>
+            <p>Želite li ovjekovječiti ovaj veliki dan za svoje mališane, moći ćete to učiniti u blagdanskom photoboothu s instant ispisom fotografija.</p>
+            <p>Toga dana, djeca će se moći poslužiti slatkim i slanim poslasticama, a njihov happy box poklon čekat će ih kod vaših evidentičara 😊</p>
+            <p>Pustolovina malih inovatora počinje za tri, dva jedan...</p>
+        </div>
+        {% elif city == "Osijek" %}
+        <div class="info-box">
+            <h3><b>Od 11 do 14 sati čekamo vas u sljedećim zabavnim kutcima:</b></h3>
+            <ul>
+                <li>Face painting</li>
+                <li>HT zone pod nazivom „Što želim biti kada odrastem?"</li>
+                <li>Carnival games</li>
+                <li>Paint & juice</li>
+                <li>Vožnja drona</li>
+                <li>Photobooth</li>
+            </ul>
+            <p>Želite li ovjekovječiti ovaj veliki dan za svoje mališane, moći ćete to učiniti u blagdanskom photoboothu s instant ispisom fotografija.</p>
+            <p>Toga dana, djeca će se moći poslužiti slatkim i slanim poslasticama, a njihov happy box poklon čekat će ih kod vaših evidentičara 😊</p>
+            <p>Pustolovina malih inovatora počinje za tri, dva, jedan...</p>
+        </div>
+        {% else %}
+        <div class="info-box">
+            <h3>Program nije dostupan</h3>
+            <p>Trenutno nemamo informacije o programu za odabrani grad. Molimo odaberite drugi grad.</p>
+        </div>
+        {% endif %}
 
         <!-- Gumb za AI asistenta -->
-        <div class="text-center">
+        <div class="text-center" style="margin-bottom: 20px;">
             <form action="/chat" method="get">
                 <button type="submit" class="btn-ai-assistant">Saznaj više pomoću AI asistenta</button>
             </form>

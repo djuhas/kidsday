@@ -1,21 +1,11 @@
 import os
-import logging
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Request, Form, Body
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 from datetime import datetime
-
-# Removed the line that loads the .env file
-# from dotenv import load_dotenv
-
-# Removed load_dotenv() since we are now using environment variables directly
-# load_dotenv()
-
-# Setting up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Fetching variables from the environment
 API_KEY = os.getenv('API_KEY')
@@ -39,7 +29,7 @@ templates = Jinja2Templates(directory="templates")
 def get_assistant_instructions(level, nickname):
     """Fetches assistant instructions from environment variables."""
     instruction_key = f'ASSISTANT_INSTRUCTIONS_LEVEL_{level}'
-    instructions = os.getenv(instruction_key, "Ti si zadani asistent.")
+    instructions = os.getenv(instruction_key, "You are the default assistant.")
     instructions = instructions.replace("{nickname}", nickname)
     return instructions
 
@@ -47,7 +37,7 @@ def get_assistant_instructions(level, nickname):
 def get_initial_message(level, nickname):
     """Fetches the assistant's initial message from environment variables."""
     message_key = f'ASSISTANT_INITIAL_MESSAGE_LEVEL_{level}'
-    message = os.getenv(message_key, "Pozdrav! Kako ti mogu pomoći?")
+    message = os.getenv(message_key, "Hello! How can I assist you?")
     message = message.replace("{nickname}", nickname)
     return message
 
@@ -62,7 +52,7 @@ def get_presets_for_level(level):
 def get_question_for_level(level):
     """Fetches the question for a specific level from environment variables."""
     question_key = f'QUESTION_LEVEL_{level}'
-    question = os.getenv(question_key, "Pitanje nije definirano za ovaj level.")
+    question = os.getenv(question_key, "Question is not defined for this level.")
     return question
 
 
@@ -92,10 +82,10 @@ async def get_schedule(request: Request):
     if not nickname or not city:
         return RedirectResponse(url="/")
     schedule = [
-        {"time": "09:00", "activity": "Dobrodošlica"},
-        {"time": "10:00", "activity": "Igra 1"},
-        {"time": "11:00", "activity": "Pauza"},
-        {"time": "12:00", "activity": "Igra 2"},
+        {"time": "09:00", "activity": "Welcome"},
+        {"time": "10:00", "activity": "Game 1"},
+        {"time": "11:00", "activity": "Break"},
+        {"time": "12:00", "activity": "Game 2"},
     ]
     return templates.TemplateResponse("schedule.html", {
         "request": request,
@@ -130,15 +120,17 @@ async def get_chat(request: Request):
     })
 
 
-@app.post("/chat", response_class=HTMLResponse)
-async def post_chat(request: Request, user_input: str = Form(...)):
+@app.post("/chat")
+async def post_chat(request: Request, data: dict = Body(...)):
+    user_input = data.get('user_input')
     nickname = request.session.get('nickname')
     level = request.session.get('level', 1)
     if not nickname:
-        return RedirectResponse(url="/")
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
     conversation = request.session.get('conversation', [])
     instructions = get_assistant_instructions(level, nickname)
-    if not any(msg['role'] == 'system' for msg in conversation):
+    # Check if 'system' message with instructions exists
+    if not any(msg['role'] == 'system' and msg['content'] == instructions for msg in conversation):
         conversation.insert(0, {"role": "system", "content": instructions})
     conversation.append({"role": "user", "content": user_input})
     max_history = 10
@@ -146,17 +138,7 @@ async def post_chat(request: Request, user_input: str = Form(...)):
     assistant_response = await get_llm_response(conversation_to_send)
     conversation.append({"role": "assistant", "content": assistant_response})
     request.session['conversation'] = conversation
-    assistant_name = "Magenta"  # Assistant's name
-    presets = get_presets_for_level(level)  # Get quick messages for the current level
-    question = get_question_for_level(level)  # Get the question for the current level
-    return templates.TemplateResponse("chat.html", {
-        "request": request,
-        "conversation": conversation,
-        "nickname": nickname,
-        "assistant_name": assistant_name,
-        "presets": presets,
-        "question": question,  # Passing the question
-    })
+    return JSONResponse({"assistant_response": assistant_response})
 
 
 @app.post("/next_level")
@@ -191,7 +173,7 @@ async def next_level(request: Request, keyword: str = Form(...)):
         conversation = request.session.get('conversation', [])
         conversation.append({
             "role": "assistant",
-            "content": "Pogrešna ključna riječ. Pokušajte ponovno."
+            "content": "Incorrect keyword. Please try again."
         })
         request.session['conversation'] = conversation
         presets = get_presets_for_level(level)
@@ -213,10 +195,17 @@ async def success(request: Request):
     nickname = request.session.get('nickname')
     if not nickname:
         return RedirectResponse(url="/")
-    return templates.TemplateResponse("uspjeh.html", {
+    return templates.TemplateResponse("success.html", {
         "request": request,
         "nickname": nickname
     })
+
+
+@app.post("/restart")
+async def restart(request: Request):
+    """Resets the session and redirects the user to the home page."""
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=303)
 
 
 async def get_llm_response(conversation_history):
@@ -230,17 +219,19 @@ async def get_llm_response(conversation_history):
         "temperature": 0.7,
         "top_p": 0.95,
     }
-    # Log the payload
-    logging.info(f"Payload sent to the endpoint: {payload}")
-    async with ClientSession() as session:
-        async with session.post(ENDPOINT, headers=headers, json=payload) as resp:
-            if resp.status == 200:
-                data = await resp.json()
-                return data['choices'][0]['message']['content']
-            else:
-                error_message = f"Error communicating with the endpoint. Status: {resp.status}, Message: {await resp.text()}"
-                logging.error(error_message)
-                return "Došlo je do greške pri komunikaciji s AI modelom."
+    timeout = ClientTimeout(total=60)  # Increase timeout to 60 seconds
+    async with ClientSession(timeout=timeout) as session:
+        try:
+            async with session.post(ENDPOINT, headers=headers, json=payload) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return data['choices'][0]['message']['content']
+                else:
+                    # Handle error without logging
+                    return "There was an error communicating with the AI model."
+        except Exception:
+            # Handle exception without logging
+            return "There was an error communicating with the AI model."
 
 
 if __name__ == '__main__':
