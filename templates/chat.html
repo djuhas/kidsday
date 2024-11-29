@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Dodano za mobilne uređaje -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        /* Vaši postojeći stilovi */
         body {
             background-image: url('/static/images/mainbck.jpg');
             background-size: cover;
@@ -64,7 +65,7 @@
             color: #E20074;
             border: 2px solid #E20074;
             padding: 10px 20px;
-            border-radius: 5px;
+            border-radius: 10px;
             font-weight: bold;
             transition: background-color 0.3s ease, color 0.3s ease;
             margin-left: 10px;
@@ -154,7 +155,7 @@
         }
         .btn-primary, .btn-success {
             background-color: #E20074;
-            color: #fff;
+            color: #ffffff;
             border: none;
             transition: background-color 0.3s ease;
         }
@@ -190,7 +191,7 @@
         }
         #preset-messages button {
             background-color: #E20074;
-            color: #fff;
+            color: #ffffff;
             border: none;
             margin: 5px;
             padding: 10px 15px;
@@ -210,7 +211,7 @@
         /* Stil za pitanje */
         #question-section h5 {
             background-color: #E20074;
-            color: #fff;
+            color: #E20074;
             padding: 10px;
             font-size: 1.2em;
             text-align: center;
@@ -318,6 +319,16 @@
                 font-size: 0.9em;
             }
         }
+
+        /* Stil za magenta tekst u modalu */
+        .modal-body-magenta {
+            color: #E20074;
+        }
+
+        /* Stil za naslov modala */
+        #successModal .modal-title {
+            color: #E20074;
+        }
     </style>
 </head>
 <body>
@@ -341,19 +352,19 @@
             </ol>
             <p>🎉 Sretno i zabavite se!</p>
 
-            <h5>🤖 Pomoćnica Magenta:</h5>
-            <p>Ako vam treba pomoć, slobodno koristite našu pomoćnicu <strong>Magenta</strong>. Ona će vas provesti kroz ovaj odjel i pomoći vam da riješite zadatke.</p>
-
             <h5>Pitanje:</h5>
             <p>{{ question }}</p> <!-- Dinamički sadržaj iz backend-a -->
 
             <!-- Unos Ključne Riječi i gumb "Sljedeći Odjel" -->
-            <form action="/next_level" method="post" class="mt-3">
+            <form id="next-level-form" method="post" class="mt-3">
                 <div class="input-group">
                     <input type="text" name="keyword" class="form-control" placeholder="🔑 Unesite ključnu riječ za nastavak..." required>
                     <button type="submit" class="btn btn-success">🚀 Sljedeći Odjel</button>
                 </div>
             </form>
+            <li></li>
+            <h5>🤖 Pomoćnica Magenta:</h5>
+            <p>Ako vam treba pomoć, slobodno koristite našu pomoćnicu <strong>Magenta</strong>. Ona će vas provesti kroz ovaj odjel i pomoći vam da riješite zadatke.</p>
         </div>
 
         <!-- Chat box -->
@@ -402,10 +413,88 @@
             </div>
         </div>
     </div>
+
+    <!-- Bootstrap Modal za uspješnu prijelaznu poruku -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="successModalLabel">Čestitamo!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+                </div>
+                <div class="modal-body modal-body-magenta">
+                    {{ message }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="modal-ok-button" data-bs-dismiss="modal">U redu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS i dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function addPreset(text) {
             document.getElementById('user-input').value = text;
         }
+
+        // Funkcija za prikaz modala
+        function showModal(message, nextUrl) {
+            document.querySelector('#successModal .modal-body').innerText = message;
+            var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            successModal.show();
+
+            // Dodaj event listener za gumb "U redu" da preusmjeri korisnika
+            document.getElementById('modal-ok-button').addEventListener('click', function() {
+                window.location.href = nextUrl;
+            }, { once: true }); // `once: true` osigurava da se listener jednom izvrši
+
+            // Dodaj event listener za 'x' gumb da preusmjeri korisnika
+            document.querySelector('#successModal .btn-close').addEventListener('click', function() {
+                window.location.href = nextUrl;
+            }, { once: true });
+        }
+
+        // Handle form submission za "Sljedeći Odjel" koristeći AJAX
+        document.getElementById('next-level-form').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Sprječava ponovno učitavanje stranice
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const keyword = formData.get('keyword').trim();
+
+            if (!keyword) return;
+
+            try {
+                const response = await fetch('/next_level', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Prikazivanje modala s porukom
+                    showModal(data.message, data.next_url);
+                } else {
+                    // Prikazivanje poruke o pogrešci u chat prozoru
+                    const chatWindow = document.getElementById('chat-window');
+                    const assistantMessage = document.createElement('div');
+                    assistantMessage.className = 'message assistant';
+                    assistantMessage.innerHTML = `
+                        <div class="content">
+                            <strong>Magenta:</strong> ${data.message}
+                        </div>
+                    `;
+                    chatWindow.appendChild(assistantMessage);
+                    chatWindow.scrollTop = chatWindow.scrollHeight;
+                }
+            } catch (error) {
+                console.error('Greška pri slanju zahtjeva:', error);
+                alert('⚠️ Došlo je do greške pri komunikaciji s poslužiteljem.');
+            }
+        });
 
         document.getElementById('message-form').addEventListener('submit', async function(event) {
             event.preventDefault(); // Sprječava ponovno učitavanje stranice
@@ -456,7 +545,7 @@
                     assistantMessage.className = 'message assistant';
                     assistantMessage.innerHTML = `
                         <div class="content">
-                            <strong>{{ assistant_name }}:</strong> ${data.assistant_response}
+                            <strong>Magenta:</strong> ${data.assistant_response}
                         </div>
                     `;
                     chatWindow.appendChild(assistantMessage);
@@ -471,6 +560,13 @@
                 alert('⚠️ Došlo je do greške pri komunikaciji s poslužiteljem.');
             }
         });
+
+        // Provjeri postoji li poruka i prikaži modal ako postoji (server-side redirect)
+        {% if message %}
+            document.addEventListener('DOMContentLoaded', function () {
+                showModal("{{ message }}", "/chat");
+            });
+        {% endif %}
     </script>
 </body>
 </html>

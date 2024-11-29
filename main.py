@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, Request, Form, Body
+from fastapi import FastAPI, Request, Form, Body, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
@@ -97,7 +97,7 @@ async def get_schedule(request: Request):
 
 
 @app.get("/chat", response_class=HTMLResponse)
-async def get_chat(request: Request):
+async def get_chat(request: Request, message: str = Query(None)):
     nickname = request.session.get('nickname')
     level = request.session.get('level', 1)
     if not nickname:
@@ -117,6 +117,7 @@ async def get_chat(request: Request):
         "assistant_name": assistant_name,
         "presets": presets,
         "question": question,  # Prosljeđivanje pitanja
+        "message": message,  # Prosljeđivanje poruke ako postoji
     })
 
 
@@ -151,25 +152,27 @@ async def next_level(request: Request, keyword: str = Form(...)):
     level = request.session.get('level', 1)
 
     if not nickname:
-        return RedirectResponse(url="/")
+        return JSONResponse({"success": False, "message": "Neautorizirano"}, status_code=401)
 
     # Dohvati ispravnu ključnu riječ za trenutni level iz varijabli okruženja
     correct_keyword_key = f'KEYWORD_LEVEL_{level}'
-    correct_keyword = os.getenv(correct_keyword_key, "").strip().lower()  # Pretvori u mala slova za usporedbu
+    correct_keyword = os.getenv(correct_keyword_key, "").strip().lower()  # Pretvori u lowercase radi lakše usporedbe
 
-    # Provjeri unesenu ključnu riječ (neovisno o velikim/malim slovima)
+    # Provjeri unesenu ključnu riječ (ignoriraj velika/mala slova)
     if keyword.strip().lower() == correct_keyword:
         if level == 9:
-            # Ako je ovo zadnji level, preusmjeri na stranicu uspjeha
-            return RedirectResponse(url="/success", status_code=303)
+            # Ako je ovo posljednji level, postavi poruku i preusmjeri na stranicu uspjeha
+            message = "BRAVO! Završili ste sve odjele."
+            return JSONResponse({"success": True, "message": message, "next_url": "/success"}, status_code=200)
         else:
-            # Prelazak na sljedeći level
+            # Prelazak na sljedeći level s porukom
             level += 1
             request.session['level'] = level
-            request.session['conversation'] = []  # Resetiraj razgovor za novi level
-            return RedirectResponse(url="/chat", status_code=303)
+            request.session['conversation'] = []  # Resetiranje razgovora za novi level
+            message = "BRAVO! Idemo u sljedeći odjel."
+            return JSONResponse({"success": True, "message": message, "next_url": "/chat"}, status_code=200)
     else:
-        # Ako je ključna riječ netočna, dodaj poruku u razgovor
+        # Ako ključna riječ nije ispravna, dodaj poruku u razgovor
         conversation = request.session.get('conversation', [])
         conversation.append({
             "role": "assistant",
@@ -179,25 +182,27 @@ async def next_level(request: Request, keyword: str = Form(...)):
         presets = get_presets_for_level(level)
         question = get_question_for_level(level)
         assistant_name = "Magenta"
-        return templates.TemplateResponse("chat.html", {
-            "request": request,
+        return JSONResponse({
+            "success": False,
+            "message": "Pogrešna ključna riječ. Pokušajte ponovno.",
             "conversation": conversation,
-            "nickname": nickname,
-            "assistant_name": assistant_name,
             "presets": presets,
-            "question": question
-        })
+            "question": question,
+            "assistant_name": assistant_name,
+            "nickname": nickname
+        }, status_code=200)
 
 
 @app.get("/success", response_class=HTMLResponse)
-async def success(request: Request):
+async def success(request: Request, message: str = Query(None)):
     """Prikazuje stranicu uspjeha nakon završetka levela."""
     nickname = request.session.get('nickname')
     if not nickname:
         return RedirectResponse(url="/")
     return templates.TemplateResponse("uspjeh.html", {
         "request": request,
-        "nickname": nickname
+        "nickname": nickname,
+        "message": message,  # Prosljeđivanje poruke ako postoji
     })
 
 
@@ -219,7 +224,7 @@ async def get_llm_response(conversation_history):
         "temperature": 0.7,
         "top_p": 0.95,
     }
-    timeout = ClientTimeout(total=60)  # Povećan timeout na 60 sekundi
+    timeout = ClientTimeout(total=60)  # Povećajte timeout na 60 sekundi
     async with ClientSession(timeout=timeout) as session:
         try:
             async with session.post(ENDPOINT, headers=headers, json=payload) as resp:
