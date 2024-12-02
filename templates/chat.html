@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chat</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Dodano za mobilne uređaje -->
+    <title>Magenta Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- For mobile devices -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Vaši postojeći stilovi */
+        /* General styles for background and layout */
         body {
             background-image: url('/static/images/mainbck.jpg');
             background-size: cover;
@@ -26,19 +26,7 @@
             padding: 20px;
             box-sizing: border-box;
         }
-        .chat-box {
-            background: url('/static/images/aiassistent.png') center no-repeat, rgba(255, 255, 255, 0.9);
-            background-size: 50%;
-            background-position: top;
-            border-radius: 10px;
-            padding: 20px;
-            width: 100%;
-            max-width: 800px;
-            box-sizing: border-box;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.164);
-            margin-top: 20px;
-        }
-        /* Stilovi za zaglavlje */
+        /* Header styles */
         .chat-header {
             width: 100%;
             max-width: 800px;
@@ -75,48 +63,113 @@
             color: #fff;
             cursor: pointer;
         }
-        /* Stilovi za kombinirani box */
-        .combined-box {
-            background-color: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.164);
-            color: #000;
+        /* Question section */
+        .question-section {
             width: 100%;
             max-width: 800px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            color: #000;
             box-sizing: border-box;
+            position: relative;
         }
-        .combined-box h5 {
-            margin-bottom: 15px;
+        .question-section h5 {
             font-size: 1.5em;
             color: #E20074;
+            margin-bottom: 10px;
         }
-        .combined-box p, .combined-box ol, .combined-box ul {
+        .question-section p {
             font-size: 1em;
             line-height: 1.5;
         }
-        /* Stilovi za objašnjenje Magenta */
-        .explanation-box {
-            background-color: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.164);
-            color: #000;
+        /* Instructions icon inside question-section */
+        .instructions-icon-question {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #E20074;
+            border: none;
+            color: #fff;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .instructions-icon-question:hover {
+            transform: scale(1.1);
+            background-color: #fff;
+            color: #E20074;
+            animation: vibrate 0.9s linear infinite;
+        }
+        .instructions-icon-question::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #fff;
+            color: #E20074;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .instructions-icon-question:hover::after {
+            opacity: 1;
+        }
+        @keyframes vibrate {
+            0% { transform: translate(0); }
+            20% { transform: translate(-1px, 1px); }
+            40% { transform: translate(-1px, -1px); }
+            60% { transform: translate(1px, 1px); }
+            80% { transform: translate(1px, -1px); }
+            100% { transform: translate(0); }
+        }
+        /* Instructions section */
+        .instructions-section {
             width: 100%;
             max-width: 800px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            color: #000;
             box-sizing: border-box;
+            display: none;
         }
-        .explanation-box h5 {
-            margin-bottom: 15px;
+        .instructions-section h5 {
             font-size: 1.5em;
             color: #E20074;
+            margin-bottom: 10px;
         }
-        .explanation-box p {
+        .instructions-section p, .instructions-section ol {
             font-size: 1em;
             line-height: 1.5;
         }
+        /* Chat box styles */
+        .chat-box {
+            background: url('/static/images/aiassistent.png') center no-repeat, rgba(255, 255, 255, 0.9);
+            background-size: 50%;
+            background-position: top;
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.164);
+            margin-top: 20px;
+        }
+        /* Chat messages */
         #chat-window {
             max-height: 50vh;
             overflow-y: auto;
@@ -164,7 +217,7 @@
             color: #E20074;
             border: 2px solid #E20074;
         }
-        /* Stil za predefinirane poruke sekciju */
+        /* Preset messages section */
         #preset-messages {
             background-color: #fff;
             border-radius: 10px;
@@ -208,19 +261,7 @@
             border: 2px solid #E20074;
             transform: scale(1.05);
         }
-        /* Stil za pitanje */
-        #question-section h5 {
-            background-color: #E20074;
-            color: #E20074;
-            padding: 10px;
-            font-size: 1.2em;
-            text-align: center;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            margin-bottom: 20px;
-            word-wrap: break-word;
-        }
-        /* Animacija za typing indicator */
+        /* Typing indicator */
         .typing::after {
             content: '';
             display: inline-block;
@@ -233,26 +274,7 @@
                 width: 4em;
             }
         }
-        /* Medijski upiti za različite veličine ekrana */
-        @media (max-width: 1200px) {
-            .chat-title {
-                font-size: 1.8em;
-            }
-            .restart-button {
-                padding: 8px 16px;
-            }
-        }
-        @media (max-width: 992px) {
-            .chat-title {
-                font-size: 1.6em;
-            }
-            .restart-button {
-                padding: 6px 12px;
-            }
-            .chat-box {
-                background-size: 60%;
-            }
-        }
+        /* Media queries for responsiveness */
         @media (max-width: 768px) {
             .chat-container {
                 padding: 10px;
@@ -293,12 +315,8 @@
             #preset-messages button {
                 padding: 8px 10px;
                 font-size: 0.9em;
-                flex: 1 1 100%; /* Tipke će zauzeti cijelu širinu */
+                flex: 1 1 100%; /* Buttons will occupy full width */
                 max-width: none;
-            }
-            #question-section h5 {
-                font-size: 1em;
-                padding: 8px;
             }
             .input-group .form-control {
                 font-size: 0.9em;
@@ -307,25 +325,19 @@
                 font-size: 0.9em;
                 padding: 8px 12px;
             }
-        }
-        @media (max-width: 576px) {
-            .chat-title {
+            /* Adjust instructions icon position on mobile */
+            .instructions-icon-question {
+                top: 10px;
+                right: 10px;
+                width: 40px;
+                height: 40px;
                 font-size: 1.2em;
             }
-            .message .content {
-                font-size: 0.8em;
-            }
-            #question-section h5 {
-                font-size: 0.9em;
-            }
         }
-
-        /* Stil za magenta tekst u modalu */
+        /* Modal styles */
         .modal-body-magenta {
             color: #E20074;
         }
-
-        /* Stil za naslov modala */
         #successModal .modal-title {
             color: #E20074;
         }
@@ -333,7 +345,7 @@
 </head>
 <body>
     <div class="container chat-container">
-        <!-- Zaglavlje s naslovom i gumbom "Ponovno pokreni" -->
+        <!-- Header with title and "Restart" button -->
         <div class="chat-header">
             <div class="chat-title">MAGENTA CHAT</div>
             <form action="/restart" method="post" class="mt-3 mt-md-0">
@@ -341,9 +353,27 @@
             </form>
         </div>
 
-        <!-- Kombinirani box s uputama, pitanjem, inputom za ključnu riječ i gumbom -->
-        <div class="combined-box">
+        <!-- Question section with instructions icon -->
+        <div class="question-section">
+            <button type="button" class="instructions-icon-question" id="instructions-icon" data-tooltip="Upute">
+                ?
+            </button>
+            <h5>Pitanje:</h5>
+            <p>{{ question }}</p>
+
+            <!-- Input for keyword and "Sljedeći Odjel" button -->
+            <form id="next-level-form" method="post" class="mt-3">
+                <div class="input-group">
+                    <input type="text" name="keyword" class="form-control" placeholder="🔑 Unesite ključnu riječ za nastavak..." required>
+                    <button type="submit" class="btn btn-success">🚀 Sljedeći Odjel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Instructions section below the question section -->
+        <div class="instructions-section" id="instructions-section">
             <h5>📚 Upute:</h5>
+            <p>Ako vam treba pomoć, slobodno koristite našu pomoćnicu <strong>Magenta</strong>. Ona će vas provesti kroz ovaj odjel i pomoći vam da riješite zadatke.</p>
             <ol>
                 <li>👀 Pažljivo pročitajte postavljeno pitanje.</li>
                 <li>💭 Razmislite o svom odgovoru.</li>
@@ -351,20 +381,6 @@
                 <li>🚀 Kliknite na <strong>Sljedeći Odjel</strong> kada ste spremni.</li>
             </ol>
             <p>🎉 Sretno i zabavite se!</p>
-
-            <h5>Pitanje:</h5>
-            <p>{{ question }}</p> <!-- Dinamički sadržaj iz backend-a -->
-
-            <!-- Unos Ključne Riječi i gumb "Sljedeći Odjel" -->
-            <form id="next-level-form" method="post" class="mt-3">
-                <div class="input-group">
-                    <input type="text" name="keyword" class="form-control" placeholder="🔑 Unesite ključnu riječ za nastavak..." required>
-                    <button type="submit" class="btn btn-success">🚀 Sljedeći Odjel</button>
-                </div>
-            </form>
-            <li></li>
-            <h5>🤖 Pomoćnica Magenta:</h5>
-            <p>Ako vam treba pomoć, slobodno koristite našu pomoćnicu <strong>Magenta</strong>. Ona će vas provesti kroz ovaj odjel i pomoći vam da riješite zadatke.</p>
         </div>
 
         <!-- Chat box -->
@@ -394,7 +410,7 @@
                 </div>
             </div>
 
-            <!-- Polje za unos poruke -->
+            <!-- Message input field -->
             <form id="message-form" class="mb-3">
                 <div class="input-group">
                     <input id="user-input" type="text" name="user_input" class="form-control" placeholder="💬 Upišite poruku..." required>
@@ -402,7 +418,7 @@
                 </div>
             </form>
 
-            <!-- Predefinirane poruke -->
+            <!-- Preset messages -->
             <div id="preset-messages" class="mb-3">
                 <h5>⚡ Brze poruke:</h5>
                 <div class="btn-container">
@@ -414,12 +430,13 @@
         </div>
     </div>
 
-    <!-- Bootstrap Modal za uspješnu prijelaznu poruku -->
+    <!-- Bootstrap Modal for success message -->
     <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <!-- Modal content -->
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="successModalLabel">Čestitamo!</h5>
+                    <h5 class="modal-title">Čestitamo!</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
                 </div>
                 <div class="modal-body modal-body-magenta">
@@ -432,52 +449,44 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS i dependencies -->
+    <!-- Bootstrap JS and dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Function to add preset message
         function addPreset(text) {
             document.getElementById('user-input').value = text;
         }
 
-        // Funkcija za prikaz modala
-        function showModal(message, nextUrl) {
-            document.querySelector('#successModal .modal-body').innerText = message;
-            var successModal = new bootstrap.Modal(document.getElementById('successModal'));
-            successModal.show();
+        // Variables
+        const instructionsIcon = document.getElementById('instructions-icon');
+        const instructionsSection = document.getElementById('instructions-section');
+        let level = {{ user_level | int }}; // Assuming user level is provided from backend
 
-            // Dodaj event listener za gumb "U redu" da preusmjeri korisnika
-            document.getElementById('modal-ok-button').addEventListener('click', function() {
-                window.location.href = nextUrl;
-            }, { once: true }); // `once: true` osigurava da se listener jednom izvrši
-
-            // Dodaj event listener za 'x' gumb da preusmjeri korisnika
-            document.querySelector('#successModal .btn-close').addEventListener('click', function() {
-                window.location.href = nextUrl;
-            }, { once: true });
-
-            // Dodaj event listener za kada se modal zatvori na bilo koji način
-            document.getElementById('successModal').addEventListener('hidden.bs.modal', function () {
-                window.location.href = nextUrl;
-            }, { once: true });
-
-            // Dodaj event listener za space key press
-            function handleSpacePress(event) {
-                if (event.key === ' ' || event.code === 'Space') {
-                    window.location.href = nextUrl;
-                }
-            }
-
-            document.addEventListener('keydown', handleSpacePress);
-
-            // Ukloni listener kada se modal zatvori
-            document.getElementById('successModal').addEventListener('hidden.bs.modal', function () {
-                document.removeEventListener('keydown', handleSpacePress);
-            }, { once: true });
+        // Show instructions automatically if level is 1
+        if (level === 1) {
+            instructionsSection.style.display = 'block';
         }
 
-        // Handle form submission za "Sljedeći Odjel" koristeći AJAX
+        // Toggle instructions section
+        instructionsIcon.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (instructionsSection.style.display === 'none' || instructionsSection.style.display === '') {
+                instructionsSection.style.display = 'block';
+            } else {
+                instructionsSection.style.display = 'none';
+            }
+        });
+
+        // Hide instructions when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('.instructions-section') && !event.target.closest('#instructions-icon')) {
+                instructionsSection.style.display = 'none';
+            }
+        });
+
+        // Handle "Sljedeći Odjel" form submission using AJAX
         document.getElementById('next-level-form').addEventListener('submit', async function(event) {
-            event.preventDefault(); // Sprječava ponovno učitavanje stranice
+            event.preventDefault();
 
             const form = event.target;
             const formData = new FormData(form);
@@ -494,35 +503,68 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    // Prikazivanje modala s porukom
+                    // Show modal with message
                     showModal(data.message, data.next_url);
                 } else {
-                    // Prikazivanje poruke o pogrešci u chat prozoru
+                    // Display error message in chat window
                     const chatWindow = document.getElementById('chat-window');
                     const assistantMessage = document.createElement('div');
                     assistantMessage.className = 'message assistant';
                     assistantMessage.innerHTML = `
                         <div class="content">
-                            <strong>Magenta:</strong> ${data.message}
+                            <strong>{{ assistant_name }}:</strong> ${data.message}
                         </div>
                     `;
                     chatWindow.appendChild(assistantMessage);
                     chatWindow.scrollTop = chatWindow.scrollHeight;
                 }
             } catch (error) {
-                console.error('Greška pri slanju zahtjeva:', error);
+                console.error('Error sending request:', error);
                 alert('⚠️ Došlo je do greške pri komunikaciji s poslužiteljem.');
             }
         });
 
+        // Function to show modal
+        function showModal(message, nextUrl) {
+            document.querySelector('#successModal .modal-body').innerText = message;
+            var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            successModal.show();
+
+            // Event listeners for modal buttons
+            document.getElementById('modal-ok-button').addEventListener('click', function() {
+                window.location.href = nextUrl;
+            }, { once: true });
+
+            document.querySelector('#successModal .btn-close').addEventListener('click', function() {
+                window.location.href = nextUrl;
+            }, { once: true });
+
+            document.getElementById('successModal').addEventListener('hidden.bs.modal', function () {
+                window.location.href = nextUrl;
+            }, { once: true });
+
+            function handleSpacePress(event) {
+                if (event.key === ' ' || event.code === 'Space') {
+                    window.location.href = nextUrl;
+                }
+            }
+
+            document.addEventListener('keydown', handleSpacePress);
+
+            document.getElementById('successModal').addEventListener('hidden.bs.modal', function () {
+                document.removeEventListener('keydown', handleSpacePress);
+            }, { once: true });
+        }
+
+        // Handle message form submission
         document.getElementById('message-form').addEventListener('submit', async function(event) {
-            event.preventDefault(); // Sprječava ponovno učitavanje stranice
+            event.preventDefault();
 
             const userInputField = document.getElementById('user-input');
             const userInput = userInputField.value.trim();
             if (!userInput) return;
 
-            // Dodaj korisničku poruku u chat
+            // Add user's message to chat
             const chatWindow = document.getElementById('chat-window');
             const userMessage = document.createElement('div');
             userMessage.className = 'message user';
@@ -534,16 +576,21 @@
             chatWindow.appendChild(userMessage);
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
-            // Očisti input polje
+            // Clear input field
             userInputField.value = '';
 
-            // Prikaži "Magenta piše..." indikator
+            // Hide instructions if level 1 user
+            if (level === 1) {
+                instructionsSection.style.display = 'none';
+            }
+
+            // Show "Magenta is typing..." indicator
             const typingIndicator = document.getElementById('typing-indicator');
             typingIndicator.style.display = 'flex';
             chatWindow.appendChild(typingIndicator);
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
-            // Pošalji poruku backendu
+            // Send message to backend
             try {
                 const response = await fetch('/chat', {
                     method: 'POST',
@@ -556,21 +603,21 @@
                 if (response.ok) {
                     const data = await response.json();
 
-                    // Ukloni "Magenta piše..." indikator
+                    // Remove typing indicator
                     typingIndicator.style.display = 'none';
 
-                    // Dodaj Magentin odgovor u chat
+                    // Add assistant's response to chat
                     const assistantMessage = document.createElement('div');
                     assistantMessage.className = 'message assistant';
                     assistantMessage.innerHTML = `
                         <div class="content">
-                            <strong>Magenta:</strong> ${data.assistant_response}
+                            <strong>{{ assistant_name }}:</strong> ${data.assistant_response}
                         </div>
                     `;
                     chatWindow.appendChild(assistantMessage);
                     chatWindow.scrollTop = chatWindow.scrollHeight;
                 } else {
-                    // Obrada greške
+                    // Handle error
                     typingIndicator.style.display = 'none';
                     alert('😕 Došlo je do greške pri slanju poruke.');
                 }
@@ -580,7 +627,13 @@
             }
         });
 
-        // Provjeri postoji li poruka i prikaži modal ako postoji (server-side redirect)
+        // Hide instructions when focusing on the message input
+        const userInputField = document.getElementById('user-input');
+        userInputField.addEventListener('focus', function() {
+            instructionsSection.style.display = 'none';
+        });
+
+        // Check if there's a message to show in modal (server-side redirect)
         {% if message %}
             document.addEventListener('DOMContentLoaded', function () {
                 showModal("{{ message }}", "/chat");

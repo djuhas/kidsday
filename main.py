@@ -7,6 +7,8 @@ from starlette.middleware.sessions import SessionMiddleware
 from aiohttp import ClientSession, ClientTimeout
 from datetime import datetime
 
+app = FastAPI()
+
 # Dohvaćanje varijabli iz okruženja
 API_KEY = os.getenv('API_KEY')
 ENDPOINT = os.getenv('ENDPOINT')
@@ -14,8 +16,6 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 if not API_KEY or not ENDPOINT or not SECRET_KEY:
     raise ValueError("API_KEY, ENDPOINT i SECRET_KEY moraju biti postavljeni u varijablama okruženja")
-
-app = FastAPI()
 
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
@@ -117,7 +117,8 @@ async def get_chat(request: Request, message: str = Query(None)):
         "assistant_name": assistant_name,
         "presets": presets,
         "question": question,  # Prosljeđivanje pitanja
-        "message": message,  # Prosljeđivanje poruke ako postoji
+        "message": message,    # Prosljeđivanje poruke ako postoji
+        "user_level": level,   # Prosljeđivanje levela u template
     })
 
 
@@ -127,7 +128,7 @@ async def post_chat(request: Request, data: dict = Body(...)):
     nickname = request.session.get('nickname')
     level = request.session.get('level', 1)
     if not nickname:
-        return JSONResponse({"error": "Neautorizirano"}, status_code=401)
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
     conversation = request.session.get('conversation', [])
     instructions = get_assistant_instructions(level, nickname)
     # Provjera i dodavanje 'system' poruke ako ne postoji
@@ -154,12 +155,17 @@ async def next_level(request: Request, keyword: str = Form(...)):
     if not nickname:
         return JSONResponse({"success": False, "message": "Neautorizirano"}, status_code=401)
 
-    # Dohvati ispravnu ključnu riječ za trenutni level iz varijabli okruženja
+    # Dohvati ispravne ključne riječi za trenutni level iz varijabli okruženja
     correct_keyword_key = f'KEYWORD_LEVEL_{level}'
-    correct_keyword = os.getenv(correct_keyword_key, "").strip().lower()  # Pretvori u lowercase radi lakše usporedbe
+    correct_keywords_str = os.getenv(correct_keyword_key, "")
+    # Ukloni navodnike ako postoje i podijeli string u listu ključnih riječi
+    correct_keywords = [kw.strip().casefold() for kw in correct_keywords_str.strip('\'"').split(",") if kw.strip()]
 
-    # Provjeri unesenu ključnu riječ (ignoriraj velika/mala slova)
-    if keyword.strip().lower() == correct_keyword:
+    # Primijeni casefold() na unesenu ključnu riječ
+    user_keyword = keyword.strip().casefold()
+
+    # Provjeri unesenu ključnu riječ
+    if user_keyword in correct_keywords:
         if level == 9:
             # Ako je ovo posljednji level, postavi poruku i preusmjeri na stranicu uspjeha
             message = "BRAVO! Završili ste sve odjele."
@@ -209,7 +215,9 @@ async def success(request: Request, message: str = Query(None)):
 @app.post("/restart")
 async def restart(request: Request):
     """Resetira sesiju i preusmjerava korisnika na početnu stranicu."""
+    # Resetirajte sve podatke u sesiji
     request.session.clear()
+    # Preusmjerite korisnika na početnu stranicu
     return RedirectResponse(url="/", status_code=303)
 
 
